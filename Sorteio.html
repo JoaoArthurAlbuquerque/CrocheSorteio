@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorteio · Eu e o Crochê</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<style>
+  :root{
+    --bg:#121312;
+    --bg-soft:#1a1c19;
+    --sage:#71865e;
+    --sage-deep:#556146;
+    --sage-light:#8a9d75;
+    --ivory:#e8ede3;
+    --ivory-dim:#c9d1c1;
+    --gold:#f39c12;
+    --gold-soft:#ffd98a;
+    --line:rgba(232,237,227,0.16);
+    --shadow-deep:0 25px 60px -20px rgba(0,0,0,0.65);
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
+  }
+
+  body{
+    font-family:'Poppins', sans-serif;
+    background:
+      radial-gradient(circle at 18% -10%, rgba(113,134,94,0.35), transparent 45%),
+      radial-gradient(circle at 85% 110%, rgba(243,156,18,0.10), transparent 40%),
+      var(--bg);
+    color:var(--ivory);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:28px 18px;
+    overflow-x:hidden;
+  }
+
+  .app-shell{
+    width:100%;
+    max-width:440px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  /* ---------- Brand header ---------- */
+  .brand-header{ margin-bottom:26px; }
+
+  .logo-ring{
+    width:148px;
+    height:148px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    animation:breathe 4.5s ease-in-out infinite;
+  }
+
+  .logo-ring::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    background:conic-gradient(from 0deg, var(--sage), var(--sage-light), var(--sage));
+    -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 7px));
+            mask:radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 7px));
+  }
+
+  .logo-ring .logo-inner{
+    width:122px;
+    height:122px;
+    border-radius:50%;
+    background:var(--sage);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    box-shadow:inset 0 2px 10px rgba(0,0,0,0.25);
+  }
+
+  .logo-inner h1{
+    font-family:'Playfair Display', serif;
+    font-weight:500;
+    font-size:1.32rem;
+    line-height:1.15;
+    color:var(--ivory);
+  }
+
+  .logo-inner .subtitle{
+    font-size:0.5rem;
+    letter-spacing:1.5px;
+    margin-top:6px;
+    color:var(--ivory-dim);
+  }
+
+  @keyframes breathe{
+    0%, 100%{ transform:scale(1) rotate(0deg); }
+    50%{ transform:scale(1.035) rotate(0.6deg); }
+  }
+
+  /* ---------- Card shell ---------- */
+  .card{
+    width:100%;
+    position:relative;
+    background:linear-gradient(165deg, rgba(113,134,94,0.98), rgba(85,97,70,0.98));
+    border-radius:26px;
+    padding:36px 28px 30px;
+    box-shadow:var(--shadow-deep);
+    overflow:hidden;
+  }
+
+  .card::before, .card::after{
+    content:"";
+    position:absolute;
+    left:0; right:0;
+    height:14px;
+    background-image:radial-gradient(circle at 8px 0, transparent 7px, var(--bg) 7.5px);
+    background-size:16px 16px;
+    background-repeat:repeat-x;
+    opacity:0.14;
+  }
+  .card::before{ top:0; transform:rotate(180deg); }
+  .card::after{ bottom:0; }
+
+  .screen{
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+  }
+  .screen.active{ display:flex; }
+
+  .screen.enter{ animation:screenIn 0.5s cubic-bezier(0.16,1,0.3,1); }
+
+  @keyframes screenIn{
+    from{ opacity:0; transform:translateY(14px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  h2{
+    font-family:'Playfair Display', serif;
+    font-weight:500;
+    font-size:1.5rem;
+    margin-bottom:8px;
+  }
+
+  .lede{
+    font-size:0.87rem;
+    color:var(--ivory-dim);
+    max-width:30ch;
+    margin-bottom:24px;
+    line-height:1.5;
+  }
+
+  /* ---------- Botão principal (tela inicial) ---------- */
+  .start-icon{
+    width:46px;
+    height:46px;
+    margin:6px auto 20px;
+    border-radius:50%;
+    background:rgba(243,156,18,0.14);
+    border:1px solid rgba(255,217,138,0.35);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.3rem;
+  }
+
+  /* ---------- Buttons ---------- */
+  button{
+    font-family:'Poppins', sans-serif;
+    font-weight:500;
+    font-size:0.92rem;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    transition:transform 0.15s ease, box-shadow 0.25s ease, background 0.25s ease;
+  }
+
+  .btn-primary{
+    width:100%;
+    margin-top:22px;
+    padding:15px;
+    background:var(--bg);
+    color:var(--ivory);
+    box-shadow:0 8px 20px -8px rgba(0,0,0,0.5);
+  }
+
+  .btn-primary:not(:disabled):hover{
+    background:#1e201d;
+    transform:translateY(-2px);
+    box-shadow:0 12px 26px -8px rgba(0,0,0,0.6);
+  }
+
+  .btn-primary:not(:disabled):active{ transform:translateY(0) scale(0.98); }
+
+  .btn-primary:disabled{
+    background:rgba(18,19,18,0.4);
+    color:rgba(232,237,227,0.4);
+    cursor:not-allowed;
+  }
+
+  .btn-secondary{
+    width:100%;
+    margin-top:22px;
+    padding:13px;
+    background:transparent;
+    color:var(--ivory);
+    border:1px solid rgba(232,237,227,0.5);
+  }
+  .btn-secondary:hover{
+    background:rgba(232,237,227,0.1);
+    border-color:var(--ivory);
+    transform:translateY(-1px);
+  }
+
+  /* ---------- Loading / slot machine ---------- */
+  .screen-loading{ padding:12px 0 4px; }
+
+  .slot-window{
+    background:rgba(18,19,18,0.35);
+    border:1px solid rgba(232,237,227,0.18);
+    border-radius:14px;
+    padding:18px 30px;
+    min-width:240px;
+    overflow:hidden;
+  }
+
+  .slot-name{
+    font-family:'Playfair Display', serif;
+    font-weight:500;
+    font-size:1.4rem;
+    color:var(--gold-soft);
+    letter-spacing:0.4px;
+    display:inline-block;
+    transition:transform 0.06s linear;
+  }
+
+  .slot-name.landed{
+    animation:landPop 0.55s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes landPop{
+    0%{ transform:scale(0.7); opacity:0.4; }
+    55%{ transform:scale(1.18); opacity:1; }
+    100%{ transform:scale(1); }
+  }
+
+  .loading-caption{
+    font-size:0.8rem;
+    color:var(--ivory-dim);
+    margin-top:16px;
+  }
+
+  .thread-loader{
+    width:40px; height:40px;
+    margin-top:14px;
+    border-radius:50%;
+    border:3px solid rgba(232,237,227,0.2);
+    border-top-color:var(--gold);
+    animation:spin 0.9s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  /* ---------- Result ---------- */
+  .result-eyebrow{
+    font-family:'Playfair Display', serif;
+    font-style:italic;
+    font-size:0.95rem;
+    color:var(--ivory-dim);
+    margin-bottom:14px;
+  }
+
+  .badge-gold{
+    position:relative;
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    background:linear-gradient(100deg, var(--gold) 30%, var(--gold-soft) 50%, var(--gold) 70%);
+    background-size:220% 100%;
+    color:#1a1305;
+    font-weight:600;
+    font-size:0.78rem;
+    padding:7px 16px;
+    border-radius:22px;
+    box-shadow:0 6px 16px -4px rgba(243,156,18,0.55);
+    animation:shimmerBadge 3s linear infinite;
+  }
+  @keyframes shimmerBadge{
+    0%{ background-position:0% 0; }
+    100%{ background-position:-220% 0; }
+  }
+
+  .winner-card{
+    width:100%;
+    margin-top:16px;
+    padding:30px 22px 26px;
+    border-radius:18px;
+    background:linear-gradient(155deg, rgba(255,255,255,0.16), rgba(255,255,255,0.02));
+    border:1px solid rgba(255,217,138,0.4);
+    box-shadow:0 0 0 1px rgba(255,217,138,0.05), 0 20px 40px -18px rgba(0,0,0,0.55);
+    position:relative;
+    overflow:hidden;
+  }
+
+  .winner-card::after{
+    content:"";
+    position:absolute;
+    top:-60%; left:-30%;
+    width:60%; height:220%;
+    background:linear-gradient(100deg, transparent, rgba(255,255,255,0.16), transparent);
+    transform:rotate(18deg);
+    animation:sweep 3.2s ease-in-out infinite;
+  }
+  @keyframes sweep{
+    0%{ left:-40%; }
+    45%{ left:130%; }
+    100%{ left:130%; }
+  }
+
+  .winner-name{
+    font-family:'Playfair Display', serif;
+    font-weight:700;
+    font-size:1.85rem;
+    margin-bottom:6px;
+    text-shadow:0 2px 10px rgba(0,0,0,0.35);
+  }
+
+  .winner-stats{
+    font-size:0.85rem;
+    color:var(--ivory-dim);
+  }
+
+  .screen-result .winner-card{
+    animation:winnerReveal 0.7s cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes winnerReveal{
+    0%{ opacity:0; transform:scale(0.88) translateY(10px); filter:blur(6px); }
+    100%{ opacity:1; transform:scale(1) translateY(0); filter:blur(0); }
+  }
+
+  /* ---------- Footer ---------- */
+  footer{
+    margin-top:22px;
+    font-size:0.72rem;
+    color:var(--ivory-dim);
+    letter-spacing:0.4px;
+    text-align:center;
+  }
+
+  .hidden{ display:none !important; }
+
+  @media (max-width:380px){
+    .card{ padding:30px 20px 26px; }
+    .winner-name{ font-size:1.55rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <header class="brand-header">
+    <div class="logo-ring">
+      <div class="logo-inner">
+        <h1>Eu e o<br>Crochê</h1>
+        <span class="subtitle">ARTE FEITA À MÃO</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="card">
+
+    <!-- Tela 1: início -->
+    <section class="screen active" id="screen-start">
+      <div class="start-icon">🧶</div>
+      <h2>Sorteio oficial</h2>
+      <p class="lede">Tudo pronto! Clique abaixo para revelar quem mais comentou na publicação.</p>
+      <button class="btn-primary" id="btn-sortear">✨ Realizar Sorteio Oficial</button>
+    </section>
+
+    <!-- Tela 2: sorteio -->
+    <section class="screen" id="screen-loading">
+      <p class="result-eyebrow">Analisando as interações...</p>
+      <div class="slot-window">
+        <span class="slot-name" id="slot-name">@carregando</span>
+      </div>
+      <div class="thread-loader"></div>
+      <p class="loading-caption">Contando os comentários, fio a fio</p>
+    </section>
+
+    <!-- Tela 3: resultado -->
+    <section class="screen" id="screen-result">
+      <p class="result-eyebrow">O grande vencedor é...</p>
+      <span class="badge-gold">🥇 1º lugar · maior comentarista</span>
+      <div class="winner-card">
+        <p class="winner-name" id="winner-username">@usuario</p>
+        <p class="winner-stats">Foi quem mais comentou na publicação 🧶✨</p>
+      </div>
+      <button class="btn-secondary" id="btn-novo">Fazer novo sorteio</button>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>(81) 99801-5910 &nbsp;·&nbsp; @eu_eocroche</p>
+  </footer>
+
+</div>
+
+<script>
+/* =====================================================================
+   Participantes da publicação (planilha embutida).
+   A pessoa vencedora do sorteio é @caiane_sillva — os demais nomes
+   aparecem apenas girando na roleta de suspense.
+   ===================================================================== */
+const PARTICIPANTS = ["caiane_sillva","mouraju99","helane_brito","lanesena13","geyseanealbuqerque","vanessasantos33","rosangela69921","messias_feiio"];
+const WINNER = "caiane_sillva";
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  const btnSortear    = document.getElementById('btn-sortear');
+  const btnNovo       = document.getElementById('btn-novo');
+
+  const screenStart    = document.getElementById('screen-start');
+  const screenLoading  = document.getElementById('screen-loading');
+  const screenResult   = document.getElementById('screen-result');
+
+  const slotName        = document.getElementById('slot-name');
+  const winnerUsername  = document.getElementById('winner-username');
+
+  // ---------- Navegação entre telas ----------
+  function showScreen(el){
+    [screenStart, screenLoading, screenResult].forEach(s => {
+      s.classList.remove('active', 'enter');
+    });
+    el.classList.add('active');
+    void el.offsetWidth; // reinicia a animação de entrada
+    el.classList.add('enter');
+  }
+
+  // ---------- Suspense: roleta girando pelos nomes reais ----------
+  // Os nomes de todos os participantes aparecem passando na tela,
+  // desacelerando gradualmente até travar sempre em @caiane_sillva.
+  function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+
+  function runSlotMachine(names, winner, onDone){
+    const totalSteps = 32;
+    const minDelay = 55;
+    const maxDelay = 320;
+    let step = 0;
+
+    function tick(){
+      const progress = step / totalSteps;
+      const eased = easeOutCubic(progress);
+      const delay = minDelay + eased * (maxDelay - minDelay);
+
+      if (step < totalSteps) {
+        const randomName = names[Math.floor(Math.random() * names.length)];
+        slotName.textContent = randomName.startsWith('@') ? randomName : `@${randomName}`;
+        step++;
+        setTimeout(tick, delay);
+      } else {
+        const finalName = winner.startsWith('@') ? winner : `@${winner}`;
+        slotName.textContent = finalName;
+        slotName.classList.remove('landed');
+        void slotName.offsetWidth;
+        slotName.classList.add('landed');
+        setTimeout(onDone, 550);
+      }
+    }
+    tick();
+  }
+
+  btnSortear.addEventListener('click', () => {
+    showScreen(screenLoading);
+
+    runSlotMachine(PARTICIPANTS, WINNER, () => {
+      winnerUsername.textContent = WINNER.startsWith('@') ? WINNER : `@${WINNER}`;
+      showScreen(screenResult);
+      launchConfetti();
+    });
+  });
+
+  function launchConfetti(){
+    const colors = ['#71865e', '#e8ede3', '#f39c12', '#ffd98a'];
+    confetti({ particleCount: 90, spread: 65, startVelocity: 42, origin: { x: 0.25, y: 0.55 }, colors });
+    confetti({ particleCount: 90, spread: 65, startVelocity: 42, origin: { x: 0.75, y: 0.55 }, colors });
+    setTimeout(() => {
+      confetti({ particleCount: 60, spread: 100, origin: { y: 0.4 }, colors, scalar: 0.9 });
+    }, 200);
+  }
+
+  btnNovo.addEventListener('click', () => {
+    showScreen(screenStart);
+  });
+
+});
+</script>
+</body>
+</html>
